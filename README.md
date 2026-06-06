@@ -22,7 +22,13 @@ Once the model learns these relationships from the pre-period, it projects a **c
 
 ### Why not Difference-in-Differences?
 
-DiD assumes parallel trends and works best with multiple treated and control units. This scenario has **one treated unit** (one advertiser) with **strong seasonality** and no clean control group of comparable advertisers. BSTS handles all of this natively and produces prediction intervals rather than just point estimates.
+DiD is a natural candidate here. You have a pre/post intervention and a potential control series in category-level sales. Both approaches can work, but BSTS is a more natural fit for this type of problem:
+
+**Contamination.** The advertiser's sales are part of the category total. If their sales drop from pausing ads, category sales dip slightly too, which violates the assumption that the control is unaffected by the intervention (SUTVA). The fix is straightforward: subtract the advertiser out of the category to create a clean control. But it's an extra step that introduces its own data requirements.
+
+**Parallel trends vs. stable covariate relationship.** This is the core trade-off. DiD (even in its regression formulation with covariates and log transforms) assumes that treatment and control would have followed parallel trends absent the intervention. With one advertiser and an aggregate category, that's hard to defend. The advertiser's trajectory can diverge for reasons unrelated to the intervention (product launches, pricing shifts, distribution changes). BSTS trades this for a different assumption: that the regression relationship between the outcome and its covariates (trend, seasonality, control series) is stable across the pre- and post-periods. That's not assumption-free, but it *is* directly testable from the pre-period fit metrics (see Validation 1), which makes it easier to defend.
+
+**Counterfactual granularity.** Regression DiD produces a treatment effect estimate with standard errors and confidence intervals, so both methods quantify uncertainty. The difference is that BSTS produces a full counterfactual *trajectory* with prediction intervals at every time point, not just an aggregate effect. For stakeholders making ongoing investment decisions, seeing the week-by-week gap between actual and counterfactual is more actionable than a single summary number.
 
 ---
 
